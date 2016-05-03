@@ -38,12 +38,11 @@ public class FixedMultivariateBandwidthStrategy implements
      * Constructor.
      * 
      * @param vector The bandwidth vector.
-     * @throws NullArgumentException If <code>vector</code> is <code>null</code>
-     *             .
+     * @throws NullArgumentException If <code>vector</code> is <code>null</code>.
      * @throws NotPositiveException If any elements of <code>vector</code> are
      *             not positive.
      */
-    public FixedMultivariateBandwidthStrategy(final double[] vector)
+    public FixedMultivariateBandwidthStrategy(final double... vector)
 	    throws NullArgumentException, NotPositiveException {
 
 	if (vector == null) {

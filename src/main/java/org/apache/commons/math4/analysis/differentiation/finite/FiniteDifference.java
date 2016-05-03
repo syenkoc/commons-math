@@ -270,7 +270,7 @@ public final class FiniteDifference implements Cloneable, Serializable {
     }
 
     /**
-     * Evaluates the finite difference derivative estiamte described by
+     * Evaluates the finite difference derivative estimate described by
      * <code>this</code> given the specified grid of function values.
      * 
      * @param grid The grid of function values.

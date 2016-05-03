@@ -19,6 +19,10 @@ package org.apache.commons.math4.analysis.differentiation.finite;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import org.apache.commons.math4.exception.DimensionMismatchException;
+import org.apache.commons.math4.exception.NullArgumentException;
+import org.apache.commons.math4.util.FastMath;
+
 /**
  * A multivariate finite difference descriptor.
  * <p>
@@ -115,6 +119,34 @@ public final class MultivariateFiniteDifference implements Cloneable, Serializab
 	}
 	
 	return coefficients;
+    }
+    
+    /**
+     * Evaluate the specified derivative.
+     * 
+     * @param valueTensor The function value tenor, in row-major order.
+     * @param h The bandwidth array.
+     * @return The numerical derivative.
+     * @throws NullArgumentException If any arguments are <code>null</code>.
+     * @throws DimensionMismatchException If <code>valueTensor</code> or
+     *             <code>h</code> have incorrect lengths.
+     */
+    public double evaluate(final double[] valueTensor, final double[] h) 
+    	throws NullArgumentException, DimensionMismatchException {
+	
+	double[] coefficients = getCoefficientsRef();
+	
+	// apply tensor-major derivative.
+	double derivative = 0;
+	for(int index = 0; index < valueTensor.length; index++) {
+	    derivative += valueTensor[index] * coefficients[index];
+	}
+	
+	for(int index = 0; index < h.length; index++) {
+	    derivative /= FastMath.pow(h[index], finiteDifferences[index].getDerivativeOrder());
+	}
+	
+	return derivative;
     }
     
     /**
