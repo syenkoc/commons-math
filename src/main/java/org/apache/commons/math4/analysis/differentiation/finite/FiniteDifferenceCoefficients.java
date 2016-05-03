@@ -45,16 +45,21 @@ public final class FiniteDifferenceCoefficients {
     }
     
     /**
-     * The actual cache.
+     * The cache for univarate descriptors.
      */
-    private final Map<FiniteDifference, double[]> cache = new ConcurrentHashMap<>();
-    
+    private final Map<FiniteDifference, FieldVector<BigFraction>> univariateCache = new ConcurrentHashMap<>();
+
+    /**
+     * The cache for multivariate descriptors.
+     */
+    private final Map<MultivariateFiniteDifference, FieldVector<BigFraction>> multivariateCache = new ConcurrentHashMap<>();
+
     /**
      * Constructor, here only for access protection.
      */
     private FiniteDifferenceCoefficients() {	
     }
-
+    
     /**
      * Gets specified finite difference coefficients.
      * 
@@ -63,25 +68,73 @@ public final class FiniteDifferenceCoefficients {
      */
     public double[] getFiniteDifferenceCoefficients(
 	    final FiniteDifference finiteDifference) {
-	double[] coefficients = cache.get(finiteDifference);
+	return toArray(getBigCoefficients(finiteDifference));
+    }
+
+    /**
+     * Gets specified multivariate finite difference coefficients in row-major order.
+     * 
+     * @param finiteDifference The finite difference descriptor.
+     * @return The finite difference coefficients.
+     */
+    public double[] getFiniteDifferenceCoefficients(
+	    final MultivariateFiniteDifference finiteDifference) {
+	return toArray(getBigCoefficients(finiteDifference));
+    }
+
+    /**
+     * Gets the coefficient for the specified finite difference.
+     * 
+     * @param finiteDifference The finite difference.
+     * @return The desired coefficients.
+     */
+    FieldVector<BigFraction> getBigCoefficients(final FiniteDifference finiteDifference) {
+	FieldVector<BigFraction> coefficients = univariateCache.get(finiteDifference);
 
 	if (coefficients == null) {
 	    // make a suitable generator and grab the coefficients in arbitrary
 	    // precision form.
 	    FiniteDifferenceCoefficientGenerator generator = new FiniteDifferenceCoefficientGenerator(
 		    finiteDifference);
-	    FieldVector<BigFraction> bigCoefficients = generator.getCoefficients();
+	    coefficients = generator.getCoefficients();
 
-	    // and now we just need to convert to doubles.
-	    coefficients = new double[bigCoefficients.getDimension()];
-	    for (int index = 0; index < coefficients.length; index++) {
-		coefficients[index] = bigCoefficients.getEntry(index).doubleValue();
-	    }
-
-	    cache.put(finiteDifference, coefficients);
+	    univariateCache.put(finiteDifference, coefficients);
 	}
 
+	return coefficients;	
+    }
+    
+    /**
+     * Gets the coefficients for the multivariate finite difference.
+     * 
+     * @param finiteDifference The finite difference descriptor.
+     * @return The desired coefficients.
+     */
+    FieldVector<BigFraction> getBigCoefficients(final MultivariateFiniteDifference finiteDifference) {
+	FieldVector<BigFraction> coefficients = multivariateCache.get(finiteDifference);
+	if(coefficients == null) {
+	    MultivariateFiniteDifferenceCoefficientGenerator generator = new MultivariateFiniteDifferenceCoefficientGenerator(finiteDifference);
+	    coefficients = generator.getCoefficients();
+	    
+	    multivariateCache.put(finiteDifference, coefficients);
+	}
+	
 	return coefficients;
+    }
+
+    /**
+     * Converts the specified vector to doubles.
+     * 
+     * @param vector The vector in question.
+     * @return A suitable double array.
+     */
+    private double[] toArray(final FieldVector<BigFraction> vector) {
+	double[] values = new double[vector.getDimension()];
+	for(int index = 0; index < values.length; index++) {
+	    values[index] = vector.getEntry(index).doubleValue();
+	}
+	
+	return values;
     }
 
 }

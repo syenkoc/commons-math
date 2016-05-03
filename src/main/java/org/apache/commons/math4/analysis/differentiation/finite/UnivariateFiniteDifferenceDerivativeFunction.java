@@ -67,44 +67,22 @@ public class UnivariateFiniteDifferenceDerivativeFunction implements UnivariateF
     @Override
     public double value(final double x) {
 	double h = bandwidthStrategy.getBandwidth(function, finiteDifference, x);
-	double value = getDerivative(x, h);
+	double[] grid = getFunctionValues(x, h);
+	double value = finiteDifference.evaluate(grid, h);
 
 	return value;
     }
 
     /**
-     * Compute the derivative of the function at the specified function using
-     * the specified grid width.
+     * Gets function value grid.
      * 
-     * @param x The point.
-     * @param h The grid width.
-     * @return The derivative of the function.
-     */
-    private double getDerivative(final double x, final double h) {
-	double[] coefficients = finiteDifference.getCoefficients();
-	double[] grid = getFunctionValues(coefficients, h, x);
-
-	double derivative = 0;
-	for (int index = 0; index < grid.length; index++) {
-	    derivative += coefficients[index] * grid[index];
-	}
-
-	int derivativeOrder = finiteDifference.getDerivativeOrder();
-	derivative /= Math.pow(h, derivativeOrder);
-
-	return derivative;
-    }
-
-    /**
-     * Get function value vector.
-     * 
-     * @param coefficients The coefficients.
-     * @param h The step size.
      * @param x The x value.
+     * @param h The step size.
      * @return Get grid of function values.
      */
-    private double[] getFunctionValues(final double[] coefficients, final double h,
-	    final double x) {
+    private double[] getFunctionValues(final double x,
+	    final double h) {
+	double[] coefficients = finiteDifference.getCoefficientsRef();
 	double[] grid = new double[coefficients.length];
 	int minimumIndex = finiteDifference.getLeftMultiplier();
 

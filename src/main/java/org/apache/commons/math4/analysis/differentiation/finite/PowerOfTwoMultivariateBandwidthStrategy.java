@@ -16,7 +16,9 @@
  */
 package org.apache.commons.math4.analysis.differentiation.finite;
 
+import org.apache.commons.math4.analysis.MultivariateFunction;
 import org.apache.commons.math4.analysis.UnivariateFunction;
+import org.apache.commons.math4.exception.DimensionMismatchException;
 import org.apache.commons.math4.exception.MathIllegalArgumentException;
 import org.apache.commons.math4.exception.NullArgumentException;
 import org.apache.commons.math4.exception.util.LocalizedFormats;
@@ -33,12 +35,12 @@ import org.apache.commons.math4.util.Precision;
  * 
  * @since 4.0
  */
-public class PowerOfTwoUnivariateBandwidthStrategy implements UnivariateBandwidthStrategy {
+public class PowerOfTwoMultivariateBandwidthStrategy implements  MultivariateBandwidthStrategy {
 
     /**
-     * The underlying strategy to wrap.
+     * The underlying strategy.
      */
-    private UnivariateBandwidthStrategy underlyingStrategy;
+    private MultivariateBandwidthStrategy underlyingStrategy;
 
     /**
      * Constructor.
@@ -47,8 +49,8 @@ public class PowerOfTwoUnivariateBandwidthStrategy implements UnivariateBandwidt
      * @throws NullArgumentException If <code>underlyingStrategy</code> is
      *             <code>null</code>.
      */
-    public PowerOfTwoUnivariateBandwidthStrategy(
-	    final UnivariateBandwidthStrategy underlyingStrategy) throws NullArgumentException {
+    public PowerOfTwoMultivariateBandwidthStrategy(
+	    final MultivariateBandwidthStrategy underlyingStrategy) throws NullArgumentException {
 
 	if (underlyingStrategy == null) {
 	    throw new NullArgumentException();
@@ -61,20 +63,19 @@ public class PowerOfTwoUnivariateBandwidthStrategy implements UnivariateBandwidt
      * {@inheritDoc}
      */
     @Override
-    public double getBandwidth(final UnivariateFunction function,
-	    final FiniteDifference finiteDifference, final double x) {
-
-	double underlyingBandwidth = underlyingStrategy.getBandwidth(function,
-		finiteDifference, x);
-
-	if (underlyingBandwidth <= 0) {
-	    // bandwidths must be positive.
-	    throw new MathIllegalArgumentException(LocalizedFormats.BANDWIDTH, x);
+    public double[] getBandwidthVector(final MultivariateFunction function,
+	    final MultivariateFiniteDifference finiteDifference, 
+	    final double[] x)
+	    throws NullArgumentException, DimensionMismatchException {
+	
+	double[] bandwidth = underlyingStrategy.getBandwidthVector(function, finiteDifference, x);
+	double[] powersOfTwo = bandwidth.clone();
+	
+	for(int index = 0; index < powersOfTwo.length; index++) {
+	    powersOfTwo[index] = Precision.roundToPowerOfTwoTowardZero(powersOfTwo[index]);
 	}
-
-	double powerOfTwo = Precision.roundToPowerOfTwoTowardZero(underlyingBandwidth);
-
-	return powerOfTwo;
+	
+	return powersOfTwo;
     }
 
 }

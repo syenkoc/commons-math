@@ -44,7 +44,7 @@ public class UnivariateFiniteDifferenceDerivativeFunctionTest {
 	testCore(sin, finiteDifference, bandwidth, cos, -twoPi, twoPi, 10000, null, 1e-12);
     }
     
-    //@Test
+    @Test
     public void testExp() {
 	Exp exp = new Exp();
 	FiniteDifference finiteDifference = new FiniteDifference(FiniteDifferenceType.CENTRAL, 1, 4);
@@ -81,12 +81,6 @@ public class UnivariateFiniteDifferenceDerivativeFunctionTest {
 	UnivariateFiniteDifferenceDerivativeFunction numerical = new UnivariateFiniteDifferenceDerivativeFunction(function, finiteDifference, bandwidthStrategy);
 		
 	FiniteDifferencesDifferentiator fd = new FiniteDifferencesDifferentiator(5, 1e-8);
-	
-	double turd = 0;
-	double shits = 0;
-	double turd2 = 0;
-	double shits2 = 0;
-	double maxX = 0;
 
 	for(double x = lower; x <= upper; x += (upper - lower) / stepCount) {
 	    double numericalValue = numerical.value(x);
@@ -95,18 +89,11 @@ public class UnivariateFiniteDifferenceDerivativeFunctionTest {
 	    double absoluteError = Math.abs(numericalValue - analyticalValue);
 	    double relativeError = ((numericalValue) == 0 && (analyticalValue == 0)) ? 0 : 
 		absoluteError / Math.max(Math.abs(numericalValue), Math.abs(analyticalValue));
-
-	    turd = Math.max(turd, absoluteError);
-	    shits = Math.max(shits, relativeError);
 	    
 	    double numericalValue2 = fd.differentiate(function).value(new DerivativeStructure(1, 1, 0, x)).getPartialDerivative(1);
 	    double absoluteError2 = Math.abs(numericalValue2 - analyticalValue);
 	    double relativeError2 = ((numericalValue2) == 0 && (analyticalValue == 0)) ? 0 : 
 		absoluteError2 / Math.max(Math.abs(numericalValue2), Math.abs(analyticalValue));
-
-	    
-	    turd2 = Math.max(turd2, absoluteError2);
-	    shits2 = Math.max(shits2, relativeError2);
 	    
 	    Assert.assertTrue(String.format("Relative error of %1$s > %2$s at %3$s (%4$s, %5$s)",
 		    relativeError, 
@@ -123,13 +110,7 @@ public class UnivariateFiniteDifferenceDerivativeFunctionTest {
 		    numericalValue,
 		    analyticalValue), 
 		    (maxAbsoluteError == null) || (absoluteError < maxAbsoluteError));
-	}	
-	
-	System.out.println(turd);
-	System.out.println(shits);
-	System.out.println();
-	System.out.println(turd2);
-	System.out.println(shits2);
+	}		
     }
 
     private static final class Quintic 

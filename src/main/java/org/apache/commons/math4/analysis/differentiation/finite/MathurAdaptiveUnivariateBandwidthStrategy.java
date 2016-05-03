@@ -18,9 +18,9 @@ package org.apache.commons.math4.analysis.differentiation.finite;
 
 import org.apache.commons.math4.analysis.UnivariateFunction;
 import org.apache.commons.math4.exception.NotPositiveException;
+import org.apache.commons.math4.util.FastMath;
 import org.apache.commons.math4.util.Precision;
 
-/**
 /**
  * A rule-of-thumb bandwidth selection strategy.
  * <p>
@@ -194,7 +194,7 @@ public class MathurAdaptiveUnivariateBandwidthStrategy implements UnivariateBand
 	double delta = Precision.EPSILON;
 
 	// first, compute the condition and roundoff error coefficients.
-	double absF = Math.abs(function.value(x));
+	double absF = FastMath.abs(function.value(x));
 	double l1 = finiteDifference.getL1NormOfCoefficients();
 
 	// use the simplified forms of the error.
@@ -206,7 +206,7 @@ public class MathurAdaptiveUnivariateBandwidthStrategy implements UnivariateBand
 	double n = finiteDifference.getErrorOrder();
 
 	double arg = (d / n) * (1d / cn) * (epsilon * fe + delta * fd);
-	double h = Math.pow(arg, 1d / (n + d));
+	double h = FastMath.pow(arg, 1d / (n + d));
 
 	return h;
     }
@@ -256,7 +256,7 @@ public class MathurAdaptiveUnivariateBandwidthStrategy implements UnivariateBand
 	// some "experiments" have shown that is better to use a bandwidth that
 	// is slightly too large vs. one that is too small *in the case of
 	// estimating the truncation error*.
-	h *= 2;
+	h *= 2d;
 
 	return h;
     }
@@ -282,7 +282,7 @@ public class MathurAdaptiveUnivariateBandwidthStrategy implements UnivariateBand
 
 	double diff = fd2 - fd1;
 	double n = finiteDifference.getErrorOrder();
-	double cn = diff / (Math.pow(h1, n) - Math.pow(h2, n));
+	double cn = diff / (FastMath.pow(h1, n) - FastMath.pow(h2, n));
 
 	return cn;
     }

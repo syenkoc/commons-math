@@ -16,8 +16,15 @@
  */
 package org.apache.commons.math4.analysis.differentiation.finite;
 
+import java.io.Serializable;
+
+import org.apache.commons.math4.exception.DimensionMismatchException;
+import org.apache.commons.math4.exception.MathIllegalArgumentException;
+import org.apache.commons.math4.exception.NotPositiveException;
 import org.apache.commons.math4.exception.NullArgumentException;
+import org.apache.commons.math4.exception.NumberIsTooLargeException;
 import org.apache.commons.math4.exception.NumberIsTooSmallException;
+import org.apache.commons.math4.exception.util.LocalizedFormats;
 import org.apache.commons.math4.util.FastMath;
 
 /**
@@ -25,7 +32,7 @@ import org.apache.commons.math4.util.FastMath;
  * 
  * @since 4.0
  */
-public final class FiniteDifference {
+public final class FiniteDifference implements Cloneable, Serializable {
 
     // a few "canonical" stencil.
 
@@ -52,6 +59,17 @@ public final class FiniteDifference {
      */
     public static final FiniteDifference FOUR_POINT_FORWARD = new FiniteDifference(
 	    FiniteDifferenceType.FORWARD, 1, 3);
+    
+    /**
+     * A semi-degenerate finite difference that simply returns the value of a
+     * univariate function.
+     * <p>
+     * This stencil has both derivative and error order 0.
+     */
+    public static final FiniteDifference VALUE = new FiniteDifference(
+	    FiniteDifferenceType.CENTRAL, 0, 0);
+
+    private static final long serialVersionUID = 715034958256394843L;
 
     /**
      * The finite difference type.
@@ -86,7 +104,7 @@ public final class FiniteDifference {
     /**
      * The stencil coefficients.
      */
-    private volatile double[] coefficients;
+    private transient volatile double[] coefficients;
 
     /**
      * Constructor.
@@ -96,11 +114,17 @@ public final class FiniteDifference {
      * @param errorOrder The error order.
      * @throws NullArgumentException If the type is <code>null</code>.
      * @throws NumberIsTooSmallException If <code>derivativeOrder</code> is
-     *             negative; or <code>error is not strictly positive.
+     *             negative; or if <code>derivativeOrder</code> is non-zero and
+     *             <code>errorOrder</code> is not strictly positive.
+     * @throws NumberIsTooLargeException If <code>derivativeOrder</code> is zero
+     *             and <code>errorOrder</code> is not 0.
+     * @throws MathIllegalArgumentException If <code>finiteDifferenceType</code>
+     *             is <code>CENTRAL</code> and the error is not an even number.
      */
     public FiniteDifference(final FiniteDifferenceType finiteDifferenceType,
-	    final int derivativeOrder, final int errorOrder) 
-	throws NullArgumentException, NumberIsTooSmallException {
+	    final int derivativeOrder, final int errorOrder)
+	    throws NullArgumentException, NumberIsTooSmallException,
+	    MathIllegalArgumentException {
 	if (finiteDifferenceType == null) {
 	    throw new NullArgumentException();
 	}
@@ -108,9 +132,19 @@ public final class FiniteDifference {
 	if (derivativeOrder < 0) {
 	    throw new NumberIsTooSmallException(derivativeOrder, 0, true);
 	}
-
-	if (errorOrder <= 0) {
+ 
+	if ((derivativeOrder != 0) && (errorOrder <= 0)) {
 	    throw new NumberIsTooSmallException(derivativeOrder, 0, false);
+	}
+
+	if ((derivativeOrder == 0) && (errorOrder != 0)) {
+	    throw new NumberIsTooLargeException(errorOrder, 0, true);
+	}
+
+	if ((finiteDifferenceType == FiniteDifferenceType.CENTRAL)
+		&& ((errorOrder % 2) != 0)) {
+	    throw new MathIllegalArgumentException(LocalizedFormats.NUMBER_ODD,
+		    errorOrder);
 	}
 
 	this.finiteDifferenceType = finiteDifferenceType;
@@ -195,16 +229,18 @@ public final class FiniteDifference {
     /**
      * Gets the coefficients, solving for them and storing in a local reference
      * if needed.
+     * <p>
+     * This method is package-protected for a reason.
      * 
      * @return The coefficients.
      */
-    private double[] getCoefficientsRef() {
+    double[] getCoefficientsRef() {
 	if (coefficients == null) {
 	    coefficients = FiniteDifferenceCoefficients.getInstance()
 		    .getFiniteDifferenceCoefficients(this);
 	}
 
-	return coefficients;	
+	return coefficients;
     }
 
     /**
@@ -219,18 +255,57 @@ public final class FiniteDifference {
     }
 
     /**
-     * Gets the l<sub>1</sub> norm of the coefficients.
+     * Gets the &lscr;<sub>1</sub> norm of the coefficients.
      * 
-     * @return The l<sub>1</sub> norm. 
+     * @return The &lscr;<sub>1</sub> norm.
      */
     public double getL1NormOfCoefficients() {
 	double[] coefficients = getCoefficientsRef();
 	double norm = 0;
-	for(double x : coefficients) {
+	for (double x : coefficients) {
 	    norm += FastMath.abs(x);
 	}
-	
+
 	return norm;
+    }
+
+    /**
+     * Evaluates the finite difference derivative estiamte described by
+     * <code>this</code> given the specified grid of function values.
+     * 
+     * @param grid The grid of function values.
+     * @param h The bandwidth.
+     * @return The finite difference derivative value.
+     * @throws NullArgumentException If <code>grid</code> is <code>null</code>.
+     * @throws DimensionMismatchException If <code>grid</code> has an incorrect
+     *             length.
+     * @throws NotPositiveException If <code>h</code> is not strictly positive.
+     */
+    public double evaluate(final double[] grid, final double h)
+	    throws NullArgumentException, DimensionMismatchException,
+	    NotPositiveException {
+	if (grid == null) {
+	    throw new NullArgumentException();
+	}
+
+	double[] coefficients = getCoefficientsRef();
+	if (grid.length != coefficients.length) {
+	    throw new DimensionMismatchException(grid.length, coefficients.length);
+	}
+
+	if (h <= 0) {
+	    throw new NotPositiveException(h);
+	}
+
+	double derivative = 0;
+	for (int index = 0; index < grid.length; index++) {
+	    derivative += coefficients[index] * grid[index];
+	}
+
+	int derivativeOrder = getDerivativeOrder();
+	derivative /= FastMath.pow(h, derivativeOrder);
+
+	return derivative;
     }
 
     /**
@@ -283,8 +358,23 @@ public final class FiniteDifference {
 	builder.append(", errorOrder=");
 	builder.append(errorOrder);
 	builder.append("]");
-	
+
 	return builder.toString();
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FiniteDifference clone() {
+	try {
+	    FiniteDifference clone = (FiniteDifference) super.clone();
+	    clone.coefficients = null;
+
+	    return clone;
+	} catch (final CloneNotSupportedException e) {
+	    throw (InternalError) new InternalError().initCause(e);
+	}
+    }
+
 }

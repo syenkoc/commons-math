@@ -61,13 +61,11 @@ import org.apache.commons.math4.util.Precision;
  * <p>
  * Our rule-of-thumb is derived by first using the "simplified" forms of the
  * condition and cancellation error. Specifically, this means that
- * (\F_{\epsilon} = |f_{0}| \sum |c_{i}|/) and F_{\delta} = \frac{|f_{0}| \sum
- * |c_{i}|}{2}.
+ * (\F_{\epsilon} = |f_{0}| \sum |c_{i}|/) and F_{\delta} = \frac{|f_{0}| \sum |c_{i}|}{2}.
  * </p>
  * <p>
  * Re-arranging, and absorbing \(|f_{0}|\) into the trunction error term:<br>
- * \[[(\frac{d}{n}) \cdot |x^{*}| \cdot\sum |c_{i}| \cdot (\epsilon +
- * \frac{\delta}{2})]^\frac{1}{n + d}\]
+ * \[[(\frac{d}{n}) \cdot |x^{*}| \cdot\sum |c_{i}| \cdot (\epsilon + \frac{\delta}{2})]^\frac{1}{n + d}\]
  * </p>
  * <p>
  * Here, \(x^{*}\) essentially measures scale of the curvature of the function
@@ -103,7 +101,7 @@ public class RuleOfThumbUnivariateBandwidthStrategy implements UnivariateBandwid
      */
     public RuleOfThumbUnivariateBandwidthStrategy(final double epsilon)
     	throws NotPositiveException {
-	if(epsilon <= 0) {
+	if(epsilon <= 0d) {
 	    throw new NotPositiveException(epsilon);
 	}
 	
@@ -125,7 +123,7 @@ public class RuleOfThumbUnivariateBandwidthStrategy implements UnivariateBandwid
 
 	// this is really the key assumption of the rule-of-thumb - that the
 	// modified curvature scale is proportional to x (except near 0).
-	double cn = Math.max(1d, Math.abs(x));
+	double cn = FastMath.max(1d, Math.abs(x));
 
 	// and now we can compute the optimal bandwidth.
 	double n = finiteDifference.getErrorOrder();

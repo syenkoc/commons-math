@@ -21,7 +21,7 @@ import org.apache.commons.math4.exception.MathIllegalArgumentException;
 import org.apache.commons.math4.exception.util.LocalizedFormats;
 
 /**
- * Fixed bandwidth strategy.
+ * Fixed bandwidth strategy for univariate functions.
  */
 public class FixedUnivariateBandwidthStrategy implements UnivariateBandwidthStrategy {
 

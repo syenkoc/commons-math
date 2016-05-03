@@ -97,7 +97,7 @@ public class FiniteDifferenceCoefficientGenerator {
     }
 
     /**
-     * Generate the coefficient matrix.
+     * Generates the coefficient matrix.
      * 
      * @return The coefficient matrix.
      */
@@ -141,3 +141,4 @@ public class FiniteDifferenceCoefficientGenerator {
     }
 
 }
+ 
